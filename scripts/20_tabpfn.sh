@@ -4,7 +4,7 @@
 #   primary  — raw arm, PRIMARY context (arg 2 or $PRIMARY_CTX, default all)
 #   arms     — clean + appendix arms at the primary context (H2)
 #   context  — recent vs random at 200k/100k/50k (H3)
-#   modes    — fast + thinking at the primary context
+#   modes    — fast at the primary context; thinking at 200k (API cap for thinking)
 #   kaggle   — raw arm on Test.csv -> late-submission file (H5)
 # MOCK=1 uses the offline mock predictor (smoke test only).
 set -euo pipefail
@@ -29,7 +29,7 @@ case "${1:-}" in
     done ;;
   modes)
     $RUN --split valid --arm raw --context "$CTX" --sampling recent --mode fast     $MOCKFLAG
-    $RUN --split valid --arm raw --context "$CTX" --sampling recent --mode thinking $MOCKFLAG ;;
+    $RUN --split valid --arm raw --context 200000 --sampling recent --mode thinking $MOCKFLAG ;;
   kaggle)
     $RUN --split test --arm raw --context "$CTX" --sampling recent --tag kaggle_primary $MOCKFLAG ;;
   *)

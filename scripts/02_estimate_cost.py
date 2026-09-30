@@ -69,42 +69,22 @@ def main():
     eval_df = pd.read_parquet(d / f"{args.split}.parquet")
     Xe, _ = to_matrix(build_arm(eval_df, "raw", None))
 
-    cands = find_candidates(tabpfn_client)
-    if not cands:
-        print("[estimate] no cost/estimate callable found — paste this back:")
-        print("  tabpfn_client:",
-              [n for n in dir(tabpfn_client) if not n.startswith("_")])
-        sys.exit(1)
-    for k, (_, sig) in cands.items():
-        print(f"[estimate] found {k}{sig}")
-
+    # tabpfn-client 0.6.1 signature, confirmed on 2026-09-30:
+    # estimate_cost(X_train, X_test=None, *, model_version=None,
+    #               operation='predict', ...) -> EstimateCostResponse
     for context in ("all", "200000", "100000", "50000"):
         ctx = select_context(train, context, "recent")
         Xc, _ = to_matrix(build_arm(ctx, "raw", None))
-        yc = np.log1p(ctx[TARGET].to_numpy())
-        got, errs = None, []
-        for name, (fn, _) in cands.items():
-            for call in (lambda f=fn: f(Xc, yc, Xe),
-                         lambda f=fn: f(X_train=Xc, y_train=yc, X_test=Xe),
-                         lambda f=fn: f(Xc, yc)):
-                try:
-                    got = (name, call())
-                    break
-                except TypeError as e:
-                    errs.append(f"{name}: TypeError: {e}")
-                except Exception as e:
-                    errs.append(f"{name}: {type(e).__name__}: {e}")
-                    break
-            if got:
-                break
-        if got:
-            print(f"[estimate] context {len(ctx):>7,} rows ({context}): {got[1]}"
-                  f"  (via {got[0]})")
-        else:
+        try:
+            resp = tabpfn_client.estimate_cost(Xc, Xe)
+            try:
+                shown = resp.model_dump()
+            except AttributeError:
+                shown = vars(resp) if hasattr(resp, "__dict__") else resp
+            print(f"[estimate] context {len(ctx):>7,} rows ({context}): {shown}")
+        except Exception as e:
             print(f"[estimate] context {len(ctx):>7,} rows ({context}): "
-                  f"no attempt succeeded:")
-            for e in errs[:4]:
-                print(f"    {e}")
+                  f"{type(e).__name__}: {e}")
 
     print("[estimate] done — nothing was spent. Paste this output back before "
           "any run (the PRIMARY context is frozen from it).")
