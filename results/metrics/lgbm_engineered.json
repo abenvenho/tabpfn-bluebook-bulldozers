@@ -1,0 +1,9 @@
+{
+  "tag": "lgbm_engineered",
+  "split": "valid",
+  "rmsle": 0.23245667616012913,
+  "model": "LightGBM 2013-style engineered",
+  "best_iteration": 995,
+  "n_features": 55,
+  "wall_seconds": 125.7
+}

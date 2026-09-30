@@ -1,0 +1,7 @@
+{
+  "tag": "median_benchmark",
+  "split": "valid",
+  "rmsle": 0.744140670869942,
+  "model": "global median",
+  "median": 24000.0
+}
