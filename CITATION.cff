@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it as below."
+title: "As is, where is: TabPFN-3.5 on the Blue Book for Bulldozers"
+authors:
+  - family-names: "Benvenho"
+    given-names: "Agnaldo Calvi"
+    affiliation: "BP Avaliações e Perícias"
+year: 2026
+url: "https://github.com/abenvenho/tabpfn-bluebook-bulldozers"
+license: Apache-2.0
+keywords:
+  - TabPFN
+  - tabular foundation models
+  - machinery and equipment valuation
+  - auction prices
+  - Kaggle Blue Book for Bulldozers
+references:
+  - type: article
+    title: "Accurate predictions on small data with a tabular foundation model"
+    authors:
+      - family-names: "Hollmann"
+        given-names: "Noah"
+    journal: "Nature"
+    year: 2025
+  - type: report
+    title: "TabPFN-3.5: Technical Report"
+    authors:
+      - name: "Prior Labs"
+    year: 2026
+    url: "https://arxiv.org/abs/2609.17895"

@@ -1,0 +1,10 @@
+lightgbm==4.7.0
+matplotlib==3.11.2
+numpy==2.4.6
+pandas==2.3.3
+pyarrow==25.0.1
+scikit-learn==1.9.0
+scipy==1.17.1
+tabpfn-client==0.6.1
+tabpfn-common-utils==0.2.19
+tabulate==0.10.0
