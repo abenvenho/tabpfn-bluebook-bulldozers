@@ -161,17 +161,23 @@ def main(argv=None):
         v.append("## H4 — not yet testable (primary run has no quantiles yet)")
     v.append("")
 
-    # ---------- H5: Kaggle late submission in the 2013 top 10% ----------
+    # ---------- H5: 2013 top-10% reference (late submissions are closed) ----------
     ks = Path("results/kaggle_score.txt")
     if ks.exists():
         score = float(ks.read_text().strip())
         refuted = score > H5_THRESHOLD
         v.append(f"## H5 — {'REFUTED' if refuted else 'corroborated'}")
         v.append(f"Kaggle private score {score:.5f} vs threshold {H5_THRESHOLD} "
-                 f"(47th of 477 in 2013).")
+                 f"(47th of 477 in 2013; supersedes the validation-split comparison).")
+    elif prim and prim.get("rmsle") is not None:
+        score = float(prim["rmsle"])
+        refuted = score > H5_THRESHOLD
+        v.append(f"## H5 — {'REFUTED' if refuted else 'corroborated'}")
+        v.append(f"Primary validation RMSLE {score:.5f} vs {H5_THRESHOLD} (top 10% of the "
+                 f"2013 final leaderboard). Pre-registered caveat: leaderboard-mirror "
+                 f"split, not a like-for-like rank — Kaggle late submissions are closed.")
     else:
-        v.append("## H5 — not yet testable (transcribe the Kaggle score to "
-                 "results/kaggle_score.txt)")
+        v.append("## H5 — not yet testable (needs the primary run)")
     v.append("")
 
     Path("results/verdicts.md").write_text("\n".join(v))

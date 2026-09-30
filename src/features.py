@@ -8,12 +8,12 @@ The `raw` arm bypasses this module entirely.
 import numpy as np
 import pandas as pd
 
-from .schema import (APPENDIX_KEY, APPENDIX_USE_COLS, DATE_COL, ID_COL,
-                     NUMERIC_COLS, TARGET)
+from .schema import (APPENDIX_KEY, APPENDIX_USE_COLS, DATE_COL, DATE_PARSED,
+                     ID_COL, NUMERIC_COLS, TARGET)
 
 
 def add_date_parts(df: pd.DataFrame) -> pd.DataFrame:
-    d = df[DATE_COL]
+    d = df[DATE_PARSED]
     df["saleYear"] = d.dt.year
     df["saleMonth"] = d.dt.month
     df["saleDayOfWeek"] = d.dt.dayofweek
@@ -23,13 +23,13 @@ def add_date_parts(df: pd.DataFrame) -> pd.DataFrame:
 
 def clean_table(df: pd.DataFrame) -> pd.DataFrame:
     """2013-style cleaning: plausible years, zero hour meters to missing, age at sale,
-    decomposed sale date. Returns a new frame without `saledate`."""
+    decomposed sale date. Returns a new frame without `saledate` (original or parsed)."""
     out = df.copy()
     out.loc[out["YearMade"] < 1900, "YearMade"] = np.nan
     out.loc[out["MachineHoursCurrentMeter"] == 0, "MachineHoursCurrentMeter"] = np.nan
     out = add_date_parts(out)
     out["AgeAtSale"] = (out["saleYear"] - out["YearMade"]).clip(lower=0)
-    return out.drop(columns=[DATE_COL])
+    return out.drop(columns=[DATE_COL, DATE_PARSED], errors="ignore")
 
 
 def join_appendix(df: pd.DataFrame, appendix: pd.DataFrame) -> pd.DataFrame:

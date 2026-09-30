@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .schema import ALL_COLUMNS, APPENDIX_KEY, DATE_COL, ID_COL, TARGET
+from .schema import ALL_COLUMNS, APPENDIX_KEY, DATE_COL, DATE_PARSED, ID_COL, TARGET
 
 VALID_START, VALID_END = "2012-01-01", "2012-04-30"
 
@@ -18,7 +18,10 @@ VALID_START, VALID_END = "2012-01-01", "2012-04-30"
 def _read_csv(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, low_memory=False)
     if DATE_COL in df.columns:
-        df[DATE_COL] = pd.to_datetime(df[DATE_COL], errors="coerce")
+        # `saledate` stays exactly as it appears in the CSV (pre-registered: the raw
+        # arm hands the original string to TabPFN). The parsed copy drives sorting,
+        # splitting and the date-decomposed features, and never reaches the predictor.
+        df[DATE_PARSED] = pd.to_datetime(df[DATE_COL], errors="coerce")
     return df
 
 
@@ -29,7 +32,7 @@ def load_raw(raw_dir: Path):
         train, valid = _read_csv(train_p), _read_csv(valid_p)
     elif (raw_dir / "TrainAndValid.csv").exists():
         both = _read_csv(raw_dir / "TrainAndValid.csv")
-        mask = (both[DATE_COL] >= VALID_START) & (both[DATE_COL] <= VALID_END)
+        mask = (both[DATE_PARSED] >= VALID_START) & (both[DATE_PARSED] <= VALID_END)
         train, valid = both[~mask].copy(), both[mask].copy()
     else:
         raise FileNotFoundError(
@@ -55,33 +58,34 @@ def load_raw(raw_dir: Path):
     app_p = raw_dir / "Machine_Appendix.csv"
     appendix = pd.read_csv(app_p, low_memory=False) if app_p.exists() else None
 
-    train = train.sort_values(DATE_COL).reset_index(drop=True)
-    valid = valid.sort_values(DATE_COL).reset_index(drop=True)
+    train = train.sort_values(DATE_PARSED).reset_index(drop=True)
+    valid = valid.sort_values(DATE_PARSED).reset_index(drop=True)
     return train, valid, test, appendix
 
 
 def noise_audit(train: pd.DataFrame) -> dict:
-    n = len(train)
+    raw = train.drop(columns=[DATE_PARSED], errors="ignore")  # audit the table as shipped
+    n = len(raw)
     audit = {
         "n_rows": int(n),
-        "n_columns": int(train.shape[1]),
-        "date_min": str(train[DATE_COL].min().date()),
-        "date_max": str(train[DATE_COL].max().date()),
+        "n_columns": int(raw.shape[1]),
+        "date_min": str(train[DATE_PARSED].min().date()),
+        "date_max": str(train[DATE_PARSED].max().date()),
         "missing_share_by_column": {
-            c: round(float(train[c].isna().mean()), 4) for c in train.columns},
-        "yearmade_eq_1000": int((train["YearMade"] == 1000).sum()),
-        "yearmade_lt_1900_share": round(float((train["YearMade"] < 1900).mean()), 4),
+            c: round(float(raw[c].isna().mean()), 4) for c in raw.columns},
+        "yearmade_eq_1000": int((raw["YearMade"] == 1000).sum()),
+        "yearmade_lt_1900_share": round(float((raw["YearMade"] < 1900).mean()), 4),
         "hours_zero_share": round(
-            float((train["MachineHoursCurrentMeter"].fillna(-1) == 0).mean()), 4),
+            float((raw["MachineHoursCurrentMeter"].fillna(-1) == 0).mean()), 4),
         "hours_missing_share": round(
-            float(train["MachineHoursCurrentMeter"].isna().mean()), 4),
+            float(raw["MachineHoursCurrentMeter"].isna().mean()), 4),
         "cardinality": {
-            c: int(train[c].nunique()) for c in
+            c: int(raw[c].nunique()) for c in
             ["ModelID", "fiModelDesc", "fiBaseModel", "fiProductClassDesc", "state",
-             "ProductGroup"] if c in train.columns},
-        "price_median": float(train[TARGET].median()) if TARGET in train.columns else None,
+             "ProductGroup"] if c in raw.columns},
+        "price_median": float(raw[TARGET].median()) if TARGET in raw.columns else None,
         "share_columns_over_50pct_missing": round(float(np.mean(
-            [train[c].isna().mean() > 0.5 for c in train.columns])), 4),
+            [raw[c].isna().mean() > 0.5 for c in raw.columns])), 4),
     }
     return audit
 
@@ -99,7 +103,7 @@ def main(argv=None):
     train, valid, test, appendix = load_raw(raw_dir)
 
     expected = set(ALL_COLUMNS)
-    got = set(train.columns)
+    got = set(train.columns) - {DATE_PARSED}
     if got != expected:
         print(f"[prepare] WARNING: train columns differ from the 53-column schema "
               f"(missing: {sorted(expected - got)}; extra: {sorted(got - expected)})")

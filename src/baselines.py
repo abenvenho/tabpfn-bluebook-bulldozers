@@ -12,7 +12,7 @@ import pandas as pd
 
 from .features import engineer_lgbm, to_matrix
 from .metrics import rmsle
-from .schema import DATE_COL, ID_COL, TARGET
+from .schema import DATE_PARSED, ID_COL, TARGET
 
 
 def _save(tag: str, valid: pd.DataFrame, pred, extra: dict):
@@ -41,8 +41,8 @@ def run_lightgbm(train: pd.DataFrame, valid: pd.DataFrame, seed=42):
     va = engineer_lgbm(valid)
 
     # Internal early-stopping holdout: the last 10% of the training period.
-    cut = train[DATE_COL].quantile(0.9)
-    fit_mask = (train[DATE_COL] <= cut).to_numpy()
+    cut = train[DATE_PARSED].quantile(0.9)
+    fit_mask = (train[DATE_PARSED] <= cut).to_numpy()
 
     X, cols = to_matrix(tr)
     Xv, _ = to_matrix(va, feature_cols=cols)

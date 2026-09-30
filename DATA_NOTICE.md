@@ -11,7 +11,7 @@ Kaggle account and acceptance of the competition rules. Place the following file
 - `Train.csv` — sales through the end of 2011 (~401k rows, 53 columns)
 - `Valid.csv` — sales from Jan 1 to Apr 30, 2012 (~11.5k rows, no price)
 - `ValidSolution.csv` — the prices of the validation sales (released after the competition)
-- `Test.csv` — sales from May 1 to Nov 30, 2012 (no price; scored only by Kaggle late submission)
+- `Test.csv` — sales from May 1 to Nov 30, 2012 (no price; Kaggle late submissions are currently closed — see PREREGISTRATION.md)
 - `Machine_Appendix.csv` — "corrected" machine attributes (used only by the `appendix` arm)
 - `Data Dictionary.xlsx` — optional, for reference
 

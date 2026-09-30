@@ -3,6 +3,10 @@
 TARGET = "SalePrice"
 ID_COL = "SalesID"
 DATE_COL = "saledate"
+# Helper column added by prepare.py: `saledate` parsed to datetime. Used only for
+# sorting, splitting and the date-decomposed features; it never reaches TabPFN —
+# the raw/appendix arms hand `saledate` exactly as it appears in the CSV.
+DATE_PARSED = "saledate_parsed"
 
 # The 53 columns of Train.csv, in file order. Test.csv/Valid.csv have the same minus SalePrice.
 ALL_COLUMNS = [

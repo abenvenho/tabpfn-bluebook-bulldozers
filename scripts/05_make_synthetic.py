@@ -80,7 +80,8 @@ def sales_for(machines, n, date_lo, date_hi, rng, start_id):
             rng.random(n) < 0.40, 0.0,
             np.where(rng.random(n) < 0.25, np.nan, np.round(hours_true))),
         "UsageBand": np.where(rng.random(n) < 0.75, None, usage),
-        "saledate": saledate.strftime("%m/%d/%Y %H:%M"),
+        # exactly the Kaggle CSV spelling: no leading zeros, hour always "0:00"
+        "saledate": [f"{d.month}/{d.day}/{d.year} 0:00" for d in saledate],
         "fiModelDesc": ["M" + str(x) + v for x, v in zip(
             m["ModelID"], rng.choice(["", "C", "D", "LC", "XT", "G"], n))],
         "fiBaseModel": ["M" + str(x) for x in m["ModelID"]],

@@ -19,8 +19,10 @@ LightGBM gets every advantage; TabPFN gets the raw table and no tuning.
 - Context (training): sales through 2011-12-31 (`Train.csv`).
 - Evaluation (out-of-time): sales 2012-01-01 to 2012-04-30 (`Valid.csv`), with prices from
   `ValidSolution.csv`. This split mirrors the competition's public leaderboard.
-- External referee: sales 2012-05-01 to 2012-11-30 (`Test.csv`), scored **only** by a Kaggle
-  late submission — the score arrives from outside the producer of the predictions.
+- `Test.csv` (sales 2012-05-01 to 2012-11-30) has no usable referee: Kaggle no longer
+  accepts late submissions for this competition (verified while signed in, 2026-09-30,
+  before any run). The submission file is still produced and versioned; if Kaggle reopens
+  late submissions before the hackathon deadline, its private score supersedes H5 below.
 
 ## Metric
 
@@ -31,7 +33,7 @@ clipped below at 0.
 
 | Arm | Table given to TabPFN |
 |---|---|
-| `raw` (primary) | all 51 predictor columns exactly as read from the CSV; `saledate` as ISO string; no imputation, no cleaning |
+| `raw` (primary) | all 51 predictor columns exactly as they appear in the CSV; `saledate` as the original string (e.g. `3/14/2012 0:00`); no parsing, no imputation, no cleaning |
 | `clean` | 2013-style cleaning: YearMade < 1900 → missing; hour meter = 0 → missing; age at sale; sale date decomposed |
 | `appendix` | `raw` + `Machine_Appendix.csv` joined on MachineID ("corrected" year, manufacturer, size class) |
 
@@ -54,14 +56,19 @@ contexts.
 | H2 | Cleaning the table or joining the "corrected" appendix does not improve TabPFN | improvement > 0.005 RMSLE (same CI rule) |
 | H3 | At equal context size, the most recent sales beat a random sample | random ≥ recent (diff ≤ 0) |
 | H4 | The 80% predictive interval (q10–q90) holds four months ahead | coverage outside 75–85% on the validation split |
-| H5 | A late Kaggle submission lands in the top 10% of the 477 teams of 2013 | private score > 0.25339 |
+| H5 | The primary raw run scores in the 2013 top 10% on the leaderboard-mirror split | RMSLE on the validation split > 0.25339 |
 
 ## Statistical procedure
 
 Paired comparisons (H1, H2, H3): bootstrap of the RMSLE difference over validation sales,
 10,000 resamples, seed 42, percentile 95% CI. Coverage (H4): share of validation sales with
-actual price inside [q10, q90]. H5: the number Kaggle returns, transcribed to
-`results/kaggle_score.txt`.
+actual price inside [q10, q90]. H5: the primary run's RMSLE on the validation split,
+against 0.25339 — the 47th of 477 (top 10%) on the 2013 final leaderboard. Caveat stated
+in advance: the threshold comes from the final (hidden-test) leaderboard while the score
+is computed on the public-leaderboard-mirror split, because Kaggle accepts no late
+submission and the 2013 public leaderboard is not retrievable; the comparison is
+indicative, not a like-for-like rank. A Kaggle private score, if one is ever obtained
+(`results/kaggle_score.txt`), supersedes it.
 
 ## Reference points (2013 final leaderboard, hidden test set)
 

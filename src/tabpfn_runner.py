@@ -20,7 +20,7 @@ import pandas as pd
 
 from .features import clean_table, join_appendix, ordinal_encode, to_matrix
 from .metrics import interval_coverage, rmsle
-from .schema import DATE_COL, ID_COL, RAW_PREDICTORS, TARGET
+from .schema import DATE_COL, DATE_PARSED, ID_COL, RAW_PREDICTORS, TARGET
 
 QUANTILES = [0.1, 0.25, 0.5, 0.75, 0.9]
 QCOLS = [f"q{int(q * 100)}" for q in QUANTILES]
@@ -37,7 +37,7 @@ def select_context(train: pd.DataFrame, context: str, sampling: str, seed=42):
     if n >= len(train):
         return train
     if sampling == "recent":
-        return train.sort_values(DATE_COL).tail(n)
+        return train.sort_values(DATE_PARSED).tail(n)
     return train.sample(n=n, random_state=seed)
 
 
@@ -53,9 +53,9 @@ def build_arm(df: pd.DataFrame, arm: str, appendix):
         out = join_appendix(df, appendix)
     else:
         raise ValueError(arm)
-    if DATE_COL in out.columns:  # hand the date to TabPFN as an ISO string, not a datetime
-        out[DATE_COL] = out[DATE_COL].dt.strftime("%Y-%m-%d")
-    return out
+    # raw/appendix arms: `saledate` reaches TabPFN exactly as it appears in the CSV
+    # (e.g. "3/14/2012 0:00"); the parsed helper never reaches the predictor.
+    return out.drop(columns=[DATE_PARSED], errors="ignore")
 
 
 def predict_mock(Xc, yc, Xe, seed=42):
@@ -167,8 +167,9 @@ def main(argv=None):
         sub = out[[ID_COL, "pred"]].rename(columns={"pred": TARGET})
         sub.to_csv(f"results/submission_{tag}.csv", index=False)
         print(f"[tabpfn] {tag}: submission -> results/submission_{tag}.csv "
-              f"({len(sub)} rows). Upload it as a Kaggle late submission and transcribe "
-              f"the score to results/kaggle_score.txt")
+              f"({len(sub)} rows). Kaggle late submissions are closed for this "
+              f"competition (see PREREGISTRATION.md); the file is versioned for the "
+              f"record. If they reopen, transcribe the score to results/kaggle_score.txt")
 
     out.to_csv(f"results/preds/{tag}.csv", index=False)
     with open(f"results/metrics/{tag}.json", "w") as f:

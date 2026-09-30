@@ -26,11 +26,16 @@ run on the real data:
 | H2 | Cleaning the table / joining the "corrected" Machine Appendix does not improve TabPFN | improvement > 0.005 |
 | H3 | At equal context size, the most recent sales beat a random sample | random is as good or better |
 | H4 | The 80% predictive interval holds four months ahead | coverage outside 75–85% |
-| H5 | A late Kaggle submission lands in the top 10% of the 477 teams of 2013 | private score > 0.25339 |
+| H5 | The primary raw run scores in the 2013 top 10% on the leaderboard-mirror split | validation RMSLE > 0.25339 |
 
-Two referees keep the producer honest: the out-of-time validation split is scored against
-`ValidSolution.csv`, and H5 is scored by **Kaggle itself** on the hidden test set
-(May–Nov 2012) via late submission — a grade the author cannot touch.
+The out-of-time validation split is scored against `ValidSolution.csv`, published by the
+competition — prices the producer of the predictions cannot touch. Kaggle no longer
+accepts late submissions for this competition (verified while signed in, 2026-09-30,
+before any run), so the planned second referee — Kaggle scoring the hidden test set — is
+unavailable; H5 instead compares the primary run, on the split that mirrors the 2013
+public leaderboard, against the final-leaderboard top-10% score, a caveat stated in
+PREREGISTRATION.md. The `Test.csv` submission file is still produced and versioned, and a
+Kaggle score supersedes H5 if late submissions ever reopen.
 
 ## Why this dataset
 
