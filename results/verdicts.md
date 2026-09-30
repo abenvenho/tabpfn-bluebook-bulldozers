@@ -2,12 +2,16 @@
 
 Primary run: `primary_raw`. Margin (H1, H2): 0.005 RMSLE. H5 threshold: 0.25339.
 
-## H1 — not yet testable (needs the primary run and lgbm_engineered)
+## H1 — corroborated
+RMSLE(TabPFN raw) − RMSLE(LightGBM) = -0.01245 (95% CI -0.01480 .. -0.01021); refuted iff diff > 0.005 with CI above 0.
 
-## H2 — not yet testable (primary run missing)
+## H2 (clean) — not yet testable
+## H2 (appendix) — not yet testable
 
 ## H3 — not yet testable (needs recent vs random at equal context size)
 
-## H4 — not yet testable (primary run has no quantiles yet)
+## H4 — corroborated
+80% interval coverage on the validation split: 82.0% (band 75%–85%).
 
-## H5 — not yet testable (needs the primary run)
+## H5 — corroborated
+Primary validation RMSLE 0.22001 vs 0.25339 (top 10% of the 2013 final leaderboard). Pre-registered caveat: leaderboard-mirror split, not a like-for-like rank — Kaggle late submissions are closed.
