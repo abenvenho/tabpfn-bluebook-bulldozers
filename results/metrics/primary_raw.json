@@ -1,0 +1,14 @@
+{
+  "tag": "primary_raw",
+  "split": "valid",
+  "arm": "raw",
+  "context": "all",
+  "sampling": "recent",
+  "mode": "base",
+  "n_context": 401125,
+  "n_eval": 11573,
+  "wall_seconds": 1654.2,
+  "predictor": "tabpfn_client",
+  "rmsle": 0.2200110371117346,
+  "coverage80": 0.8196664650479565
+}
