@@ -1,0 +1,14 @@
+{
+  "tag": "pilot_raw_50k",
+  "split": "valid",
+  "arm": "raw",
+  "context": "50000",
+  "sampling": "recent",
+  "mode": "base",
+  "n_context": 50000,
+  "n_eval": 11573,
+  "wall_seconds": 148.6,
+  "predictor": "tabpfn_client",
+  "rmsle": 0.22629699201538087,
+  "coverage80": 0.823986865981163
+}
