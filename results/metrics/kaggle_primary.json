@@ -1,0 +1,26 @@
+{
+  "tag": "kaggle_primary",
+  "split": "test",
+  "arm": "raw",
+  "context": "all",
+  "sampling": "recent",
+  "mode": "base",
+  "n_context": 401125,
+  "n_eval": 12457,
+  "wall_seconds": 1570.8,
+  "predictor": "tabpfn_client",
+  "server_timings": {
+    "fit": {
+      "elapsed_s": 536.205,
+      "queue_wait_s": 1.295,
+      "train_set_transform_s": 534.91,
+      "fit_s": 0.0
+    },
+    "predict": {
+      "test_set_transform_queue_wait_s": null,
+      "test_set_transform_s": null,
+      "predict_queue_wait_s": 0.121,
+      "predict_s": 503.112
+    }
+  }
+}
