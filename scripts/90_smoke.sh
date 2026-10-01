@@ -2,8 +2,31 @@
 # End-to-end smoke test on synthetic data (53-column Kaggle schema). No API, no token:
 # the TabPFN calls use the offline mock. Exercises prepare, baselines, all arms,
 # H3 context pair, the Kaggle submission path, compare and figures.
+# It runs in a temporary copy of the repository, so the versioned results/ are never
+# overwritten. SMOKE_KEEP=1 keeps that copy for inspection.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+if [ -z "${SMOKE_IN_COPY:-}" ]; then
+  ROOT="$PWD"
+  PYTHON=${PYTHON:-$([ -x .venv/bin/python ] && echo "$ROOT/.venv/bin/python" || command -v python3)}
+  case "$PYTHON" in /*) ;; *) [ -x "$PYTHON" ] && PYTHON="$ROOT/$PYTHON" ;; esac
+  WORK=$(mktemp -d "${TMPDIR:-/tmp}/bluebook-smoke.XXXXXX")
+  if [ -z "${SMOKE_KEEP:-}" ]; then trap 'rm -rf "$WORK"' EXIT; fi
+  "$PYTHON" - "$ROOT" "$WORK" <<'EOF'
+import os, shutil, sys
+src, dst = sys.argv[1], sys.argv[2]
+def ignore(d, names):
+    if os.path.samefile(d, src):  # top level: no git, environments, data or results
+        return [n for n in names if n in {".git", "data", "results"} or n.startswith(".venv")]
+    return [n for n in names if n == "__pycache__"]
+shutil.copytree(src, dst, ignore=ignore, dirs_exist_ok=True)
+EOF
+  mkdir -p "$WORK/data/raw" "$WORK/results"
+  echo "== smoke test in a temporary copy: $WORK (results/ here is untouched)"
+  (cd "$WORK" && PYTHON="$PYTHON" SMOKE_IN_COPY=1 bash scripts/90_smoke.sh)
+  exit
+fi
 PY=${PYTHON:-$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)}
 export MOCK=1
 

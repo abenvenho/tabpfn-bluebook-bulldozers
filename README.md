@@ -232,7 +232,8 @@ Logged as the pre-registration requires; where a choice was open, it went to the
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-bash scripts/90_smoke.sh          # end-to-end check on synthetic data — no API, no token
+bash scripts/90_smoke.sh          # end-to-end check on synthetic data — no API, no token;
+                                  # runs in a temporary copy, results/ is left untouched
 ```
 
 With the Kaggle files in `data/raw/` (see [DATA_NOTICE.md](DATA_NOTICE.md)) and a Prior
