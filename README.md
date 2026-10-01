@@ -194,7 +194,7 @@ Logged as the pre-registration requires; where a choice was open, it went to the
    H3 block, so the verdict is the same either way.
 3. **Primary context = all sales.** The rule picked the largest context that fits the
    quota; the server quote of 2026-09-30 (181,897 tokens for all 401,125 sales), recorded
-   in PREREGISTRATION.md (commit `442fd3f`), made that all sales. The re-quote of
+   in the message of commit `442fd3f` before the primary run, made that all sales. The re-quote of
    2026-10-01 (`results/cost_quote_2026-10-01.txt`) gives the same values.
 4. **Modes.** Thinking was moved from the primary context to 200k before any modes run,
    because the API caps thinking at 200k rows; it then failed twice server-side and ran
