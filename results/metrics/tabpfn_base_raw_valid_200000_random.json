@@ -1,0 +1,28 @@
+{
+  "tag": "tabpfn_base_raw_valid_200000_random",
+  "split": "valid",
+  "arm": "raw",
+  "context": "200000",
+  "sampling": "random",
+  "mode": "base",
+  "n_context": 200000,
+  "n_eval": 11573,
+  "wall_seconds": 628.6,
+  "predictor": "tabpfn_client",
+  "server_timings": {
+    "fit": {
+      "elapsed_s": 284.468,
+      "queue_wait_s": 0.272,
+      "train_set_transform_s": 284.196,
+      "fit_s": 0.0
+    },
+    "predict": {
+      "test_set_transform_queue_wait_s": null,
+      "test_set_transform_s": null,
+      "predict_queue_wait_s": 0.116,
+      "predict_s": 161.896
+    }
+  },
+  "rmsle": 0.22139008639964702,
+  "coverage80": 0.8231227857945217
+}

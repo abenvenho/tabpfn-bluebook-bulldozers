@@ -10,7 +10,12 @@ RMSLE(raw) − RMSLE(clean) = +0.00175 (95% CI +0.00083 .. +0.00270); refuted if
 ## H2 (appendix) — corroborated
 RMSLE(raw) − RMSLE(appendix) = +0.00267 (95% CI +0.00150 .. +0.00388); refuted iff the appendix arm improves by more than 0.005 (CI above 0).
 
-## H3 — not yet testable (needs recent vs random at equal context size)
+## H3 (context 50000) — corroborated
+RMSLE(recent) − RMSLE(random) = -0.00639 (95% CI -0.00839 .. -0.00440); refuted iff ≥ 0.
+## H3 (context 100000) — corroborated
+RMSLE(recent) − RMSLE(random) = -0.00032 (95% CI -0.00215 .. +0.00152); refuted iff ≥ 0.
+## H3 (context 200000) — REFUTED
+RMSLE(recent) − RMSLE(random) = +0.00234 (95% CI +0.00079 .. +0.00389); refuted iff ≥ 0.
 
 ## H4 — corroborated
 80% interval coverage on the validation split: 82.0% (band 75%–85%).
