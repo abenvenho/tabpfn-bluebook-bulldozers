@@ -1,0 +1,34 @@
+# Output of `python scripts/02_estimate_cost.py`, run by the author on 2026-10-01
+# (after the arms block, during the context block). Transcribed verbatim.
+# Check: the arms quote (2 x 182,967 + 2 x 183,502 = 732,938) equals the measured
+# usage after the arms block (results/usage_log.txt, used=732938) to the token.
+
+[estimate] token taken from TABPFN_TOKEN
+
+[estimate] Part 1 — raw arm, one predict call, validation split
+  context 401,125 rows (   all): 181897
+  context 200,000 rows (200000): 53211
+  context 100,000 rows (100000): 18496
+  context  50,000 rows ( 50000): 10000
+
+[estimate] Part 2 — remaining blocks (per call; x2 calls unless thinking)
+  arms     clean     all       : 182967
+  arms     appendix  all       : 183502
+  context  recent     200000   : 53211
+  context  random     200000   : 53211
+  context  recent     100000   : 18496
+  context  random     100000   : 18496
+  context  recent      50000   : 10000
+  context  random      50000   : 10000
+  modes    fast      all       : 142298
+  modes    thinking  200000 fit: 96397
+  modes    thinking  200000 prd: 372475
+  kaggle   raw       all (test): 182636
+
+[estimate] expected spend per block (quote x calls):
+  arms    : 732,938
+  context : 326,828
+  modes   : 753,468
+  kaggle  : 365,272
+  total   : 2,178,506  — daily quota 5,000,000
+[estimate] done — nothing was spent.
