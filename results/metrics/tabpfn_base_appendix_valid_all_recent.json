@@ -1,0 +1,14 @@
+{
+  "tag": "tabpfn_base_appendix_valid_all_recent",
+  "split": "valid",
+  "arm": "appendix",
+  "context": "all",
+  "sampling": "recent",
+  "mode": "base",
+  "n_context": 401125,
+  "n_eval": 11573,
+  "wall_seconds": 1805.4,
+  "predictor": "tabpfn_client",
+  "rmsle": 0.21734077290009185,
+  "coverage80": 0.8192344249546358
+}

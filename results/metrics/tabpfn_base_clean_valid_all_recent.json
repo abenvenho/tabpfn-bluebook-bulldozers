@@ -1,0 +1,14 @@
+{
+  "tag": "tabpfn_base_clean_valid_all_recent",
+  "split": "valid",
+  "arm": "clean",
+  "context": "all",
+  "sampling": "recent",
+  "mode": "base",
+  "n_context": 401125,
+  "n_eval": 11573,
+  "wall_seconds": 1670.3,
+  "predictor": "tabpfn_client",
+  "rmsle": 0.21826404142369404,
+  "coverage80": 0.8432558541432645
+}
