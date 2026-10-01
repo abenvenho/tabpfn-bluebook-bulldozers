@@ -18,6 +18,9 @@ engineering. (Measured in `results/metrics/noise_audit.json`.)
 warranty, no cleanup. The question is whether a tabular foundation model can price under
 the same clause — taking the data as is, where it is.
 
+**Paper:** [paper/bluebook_tabpfn_paper.pdf](paper/bluebook_tabpfn_paper.pdf) (9 pages; LaTeX
+source alongside).
+
 The design is set **against** the bet, and every hypothesis, threshold and analysis
 decision is frozen in [PREREGISTRATION.md](PREREGISTRATION.md) *before* the first TabPFN
 run on the real data:
@@ -45,9 +48,15 @@ The 2013 *Blue Book for Bulldozers* competition (Fast Iron / Kaggle) asked for a
 prices of ~412k pieces of heavy equipment from usage, type and configuration — a machinery
 valuation problem, which is the author's professional practice. It is a canonical *dirty*
 tabular benchmark: 53 columns full of missing and erroneous values, high-cardinality
-codes, and a strict temporal split. The 2013 verdict that the "corrected" Machine Appendix
-did **not** help (reported by competitors at the time) becomes a falsifiable hypothesis
-here (H2).
+codes, and a strict temporal split. Top teams in 2013 reported that the "corrected"
+Machine Appendix did **not** help — the 9th
+([Seroussi](https://yanirseroussi.com/2014/11/19/fitting-noise-forecasting-the-sale-price-of-bulldozers-kaggle-competition-summary/)),
+16th ([Olariu](http://webmining.olariu.org/trees-ridges-and-bulldozers-made-in-1000-ad/)) and
+20th ([Dataiku](https://blog.dataiku.com/2013/04/26/kaggle-contest-blue-book-for-bulldozers))
+placed teams among them; here that report becomes a falsifiable hypothesis (H2). Those teams
+also fitted separate models per product group, blended several models (gradient boosting,
+random forests, linear models) and searched their hyper-parameters — none of which the
+LightGBM baseline here does (see *Limits*).
 
 ## Results
 
@@ -146,6 +155,31 @@ verdict.
   limit of 5,000,000 tokens is the one stated in the API's HTTP 429 message of 2026-09-30
   (`results/api_errors.txt`).
 
+### External reference on the same basis
+
+The 2013 winning score (0.22909) cannot be compared with this study's numbers. It was
+computed on the hidden May–Nov 2012 test set by a model trained with data through April
+2012, and that set can no longer be scored. The public leaderboard was computed on the
+same Jan–Apr 2012 sales as here, but it is contaminated: the validation prices were
+released in the competition's last week, and 108 of 475 teams show an RMSLE of 0.0 on it
+([Parr & Howard](https://mlbook.explained.ai/bulldozer-testing.html)).
+
+One published model does share this study's basis. In *The Mechanics of Machine Learning*,
+[Parr & Howard](https://mlbook.explained.ai/bulldozer-testing.html) use Kaggle's
+`Valid.csv` (sales of 2012-01-01 to 2012-04-28) as their test set and train only on sales
+through 2011 (from 2007 on). Their tuned random forest, with feature selection and an
+inflation adjustment, scores **RMSLE 0.2396** there.
+
+| Model, evaluated on Jan–Apr 2012, trained on sales through 2011 | RMSLE |
+|---|---|
+| TabPFN-3.5, raw table + Machine Appendix, all sales | 0.21734 |
+| **TabPFN-3.5, raw table, all sales (primary)** | **0.22001** |
+| LightGBM, 2013-style cleaning and features (this study) | 0.23246 |
+| Random forest, Parr & Howard | 0.2396 |
+
+This is a point comparison only: their predictions are not available, so no paired test
+is possible. It is context, not a pre-registered hypothesis.
+
 ### Deviations from the pre-registration
 
 Logged as the pre-registration requires; where a choice was open, it went to the weaker claim.
@@ -183,6 +217,16 @@ Logged as the pre-registration requires; where a choice was open, it went to the
    came after the limit had been reached. Usage was not yet being read, so the rest
    cannot be attributed.
 
+### Limits
+
+- **One evaluation period**, January to April 2012. Other periods may differ.
+- **A plain adversary.** The LightGBM has fixed hyper-parameters, no Machine Appendix, no
+  per-group models and no blending; the 2013 top teams did all of these, so a stronger
+  adversary is possible.
+- **One table, one market.** The finding is not tested on other data.
+- **The independent audit was done by an AI agent**, not a person, recomputing every number
+  in this README from the result files with its own code.
+
 ## Reproducing
 
 ```bash
@@ -219,6 +263,7 @@ primary run alone takes about 28 minutes of wall time.
 
 ```
 PREREGISTRATION.md      frozen hypotheses, thresholds and analysis decisions
+paper/                  the paper (PDF and LaTeX source)
 DATA_NOTICE.md          what to download from Kaggle; what is (not) redistributed
 scripts/                00 api check · 01 prepare · 02 cost quote · 03 usage reading ·
                         05 synthetic · 10 baselines · 20 tabpfn blocks · 90 smoke test
