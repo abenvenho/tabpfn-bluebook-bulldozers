@@ -7,12 +7,14 @@ authors:
     affiliation: "BP Avaliações e Perícias"
 year: 2026
 url: "https://github.com/abenvenho/tabpfn-bluebook-bulldozers"
+repository-code: "https://github.com/abenvenho/tabpfn-bluebook-bulldozers"
 license: Apache-2.0
 keywords:
   - TabPFN
   - tabular foundation models
   - machinery and equipment valuation
   - auction prices
+  - pre-registration
   - Kaggle Blue Book for Bulldozers
 references:
   - type: article
@@ -20,11 +22,37 @@ references:
     authors:
       - family-names: "Hollmann"
         given-names: "Noah"
+      - family-names: "Müller"
+        given-names: "Samuel"
+      - family-names: "Purucker"
+        given-names: "Lennart"
+      - family-names: "Krishnakumar"
+        given-names: "Arjun"
+      - family-names: "Körfer"
+        given-names: "Max"
+      - family-names: "Hoo"
+        given-names: "Shi Bin"
+      - family-names: "Schirrmeister"
+        given-names: "Robin Tibor"
+      - family-names: "Hutter"
+        given-names: "Frank"
     journal: "Nature"
+    volume: 637
+    start: 319
+    end: 326
     year: 2025
-  - type: report
-    title: "TabPFN-3.5: Technical Report"
+    doi: "10.1038/s41586-024-08328-6"
+  - type: software
+    title: "TabPFN (TabPFN-3.5 via the Prior Labs API, tabpfn-client 0.6.1)"
     authors:
       - name: "Prior Labs"
-    year: 2026
-    url: "https://arxiv.org/abs/2609.17895"
+    url: "https://github.com/PriorLabs/TabPFN"
+    notes: "Model card: https://huggingface.co/Prior-Labs/tabpfn_3_5"
+  - type: book
+    title: "The Mechanics of Machine Learning"
+    authors:
+      - family-names: "Parr"
+        given-names: "Terence"
+      - family-names: "Howard"
+        given-names: "Jeremy"
+    url: "https://mlbook.explained.ai"
