@@ -19,7 +19,8 @@ warranty, no cleanup. The question is whether a tabular foundation model can pri
 the same clause — taking the data as is, where it is.
 
 **Paper:** [paper/bluebook_tabpfn_paper.pdf](paper/bluebook_tabpfn_paper.pdf) (9 pages; LaTeX
-source alongside).
+source alongside). **Slides:** [docs/bluebook_tabpfn_slides.pdf](docs/bluebook_tabpfn_slides.pdf)
+(12 slides).
 
 The design is set **against** the bet, and every hypothesis, threshold and analysis
 decision is frozen in [PREREGISTRATION.md](PREREGISTRATION.md) *before* the first TabPFN
@@ -264,6 +265,7 @@ primary run alone takes about 28 minutes of wall time.
 ```
 PREREGISTRATION.md      frozen hypotheses, thresholds and analysis decisions
 paper/                  the paper (PDF and LaTeX source)
+docs/                   presentation slides (PDF)
 DATA_NOTICE.md          what to download from Kaggle; what is (not) redistributed
 scripts/                00 api check · 01 prepare · 02 cost quote · 03 usage reading ·
                         05 synthetic · 10 baselines · 20 tabpfn blocks · 90 smoke test
