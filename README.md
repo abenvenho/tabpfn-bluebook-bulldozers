@@ -20,7 +20,7 @@ the same clause — taking the data as is, where it is.
 
 **Paper:** [paper/bluebook_tabpfn_paper.pdf](paper/bluebook_tabpfn_paper.pdf) (9 pages; LaTeX
 source alongside). **Slides:** [docs/bluebook_tabpfn_slides.pdf](docs/bluebook_tabpfn_slides.pdf)
-(12 slides).
+(12 slides). **App:** `streamlit run app/streamlit_app.py` — see [App](#app).
 
 The design is set **against** the bet, and every hypothesis, threshold and analysis
 decision is frozen in [PREREGISTRATION.md](PREREGISTRATION.md) *before* the first TabPFN
@@ -228,6 +228,32 @@ Logged as the pre-registration requires; where a choice was open, it went to the
 - **The independent audit was done by an AI agent**, not a person, recomputing every number
   in this README from the result files with its own code.
 
+## App
+
+```bash
+.venv/bin/streamlit run app/streamlit_app.py      # from the repository root
+```
+
+Three tabs, all read from this repository's files:
+
+- **The test** — the bet, the five pre-registered verdicts and the figures, from `results/`.
+- **Jan–Apr 2012 sales** — every validation sale: realized price, TabPFN-3.5 with its 80%
+  interval, and the engineered LightGBM, from the versioned prediction files (no API call).
+  With the Kaggle files prepared (`data/prepared/`), it also shows the machine's raw
+  attributes as TabPFN-3.5 received them, and breakdowns by product group and by data
+  quality of the row (year recorded as 1000, hour meter missing or zero).
+- **Price a machine as is** — edit a sale's raw attributes, dirty values included, and ask
+  TabPFN-3.5 live through the Prior Labs API, with the 50,000 most recent training sales as
+  context (the 50k-recent configuration of H3). Needs `data/prepared/` and your own token.
+  The server's cost quote comes before any paid call, and the usage counter is read before
+  and after it. It can also price the 2013-cleaned version of the same row.
+
+The breakdowns and live prices are exploratory and change no verdict.
+`BLUEBOOK_APP_MOCK=1` runs the app with the smoke test's stand-in model instead of
+TabPFN-3.5, and every live result then says so.
+
+![The app: one Jan–Apr 2012 sale with no year of manufacture and no hour reading](docs/app_explorer.png)
+
 ## Reproducing
 
 ```bash
@@ -266,7 +292,8 @@ primary run alone takes about 28 minutes of wall time.
 ```
 PREREGISTRATION.md      frozen hypotheses, thresholds and analysis decisions
 paper/                  the paper (PDF and LaTeX source)
-docs/                   presentation slides (PDF)
+docs/                   presentation slides (PDF), app screenshot
+app/                    Streamlit app (streamlit_app.py); theme in .streamlit/
 DATA_NOTICE.md          what to download from Kaggle; what is (not) redistributed
 scripts/                00 api check · 01 prepare · 02 cost quote · 03 usage reading ·
                         05 synthetic · 10 baselines · 20 tabpfn blocks · 90 smoke test
