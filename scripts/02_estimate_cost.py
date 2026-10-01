@@ -1,60 +1,39 @@
-"""Server-side cost quote for the planned runs — spends no quota, sees no result.
+"""Server-side cost quotes for every planned run — spends no quota, sees no result.
 
 Usage: TABPFN_TOKEN=... python scripts/02_estimate_cost.py [--data-dir data/prepared]
 
-Prints, for each pre-registered context size, what the API says a fit+predict
-call on the raw arm costs, so the PRIMARY context can be frozen from the real
-quote (PREREGISTRATION.md). Written defensively: tabpfn-client 0.6.1 documents
-a cost-estimation entry point; if the installed client exposes it under a
-different name or signature, the script prints what it found so the call can
-be fixed without spending anything.
+Part 1 quotes the raw arm at each pre-registered context size; it is what froze
+the PRIMARY context (PREREGISTRATION.md). Part 2 quotes the remaining blocks
+(arms, context, modes, kaggle) so they can be scheduled inside the daily quota.
+Each non-thinking run makes two predict calls (quantiles, then mean), so its
+expected cost is about twice the single-call quote. Quotes use
+tabpfn_client.estimate_cost(X_train, X_test=None, *, model_version, operation),
+confirmed against tabpfn-client 0.6.1.
 """
 import argparse
-import inspect
 import os
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.features import to_matrix  # noqa: E402
-from src.schema import TARGET  # noqa: E402
 from src.tabpfn_runner import build_arm, select_context  # noqa: E402
 
 
-def find_candidates(tabpfn_client):
-    """Callables on the module, the regressor class and an instance whose name
-    mentions cost/estimate."""
-    sources = [("tabpfn_client", tabpfn_client)]
-    reg_cls = getattr(tabpfn_client, "TabPFNRegressor", None)
-    if reg_cls is not None:
-        sources.append(("TabPFNRegressor", reg_cls))
-        try:
-            sources.append(("TabPFNRegressor()", reg_cls()))
-        except Exception:
-            pass
-    out = {}
-    for label, src in sources:
-        for name in dir(src):
-            if name.startswith("_"):
-                continue
-            if "cost" in name.lower() or "estimat" in name.lower():
-                obj = getattr(src, name)
-                if callable(obj):
-                    try:
-                        sig = str(inspect.signature(obj))
-                    except (TypeError, ValueError):
-                        sig = "(?)"
-                    out[f"{label}.{name}"] = (obj, sig)
-    return out
+def quote(tabpfn_client, Xc, Xe=None, **kw):
+    try:
+        resp = tabpfn_client.estimate_cost(Xc, Xe, **kw)
+        return int(resp.estimated_cost)
+    except Exception as e:
+        print(f"    ! {type(e).__name__}: {e}")
+        return None
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default="data/prepared")
-    ap.add_argument("--split", default="valid")
     args = ap.parse_args()
 
     import tabpfn_client
@@ -66,28 +45,61 @@ def main():
 
     d = Path(args.data_dir)
     train = pd.read_parquet(d / "train.parquet")
-    eval_df = pd.read_parquet(d / f"{args.split}.parquet")
-    Xe, _ = to_matrix(build_arm(eval_df, "raw", None))
+    valid = pd.read_parquet(d / "valid.parquet")
+    test = pd.read_parquet(d / "test.parquet")
+    appendix = pd.read_parquet(d / "appendix.parquet")
 
-    # tabpfn-client 0.6.1 signature, confirmed on 2026-09-30:
-    # estimate_cost(X_train, X_test=None, *, model_version=None,
-    #               operation='predict', ...) -> EstimateCostResponse
+    def X(df, arm="raw"):
+        return to_matrix(build_arm(df, arm, appendix))[0]
+
+    Xv_raw = X(valid)
+
+    print("\n[estimate] Part 1 — raw arm, one predict call, validation split")
     for context in ("all", "200000", "100000", "50000"):
         ctx = select_context(train, context, "recent")
-        Xc, _ = to_matrix(build_arm(ctx, "raw", None))
-        try:
-            resp = tabpfn_client.estimate_cost(Xc, Xe)
-            try:
-                shown = resp.model_dump()
-            except AttributeError:
-                shown = vars(resp) if hasattr(resp, "__dict__") else resp
-            print(f"[estimate] context {len(ctx):>7,} rows ({context}): {shown}")
-        except Exception as e:
-            print(f"[estimate] context {len(ctx):>7,} rows ({context}): "
-                  f"{type(e).__name__}: {e}")
+        c = quote(tabpfn_client, X(ctx), Xv_raw)
+        print(f"  context {len(ctx):>7,} rows ({context:>6}): {c}")
 
-    print("[estimate] done — nothing was spent. Paste this output back before "
-          "any run (the PRIMARY context is frozen from it).")
+    print("\n[estimate] Part 2 — remaining blocks (per call; x2 calls unless thinking)")
+    plan = []
+    for arm in ("clean", "appendix"):
+        c = quote(tabpfn_client, X(train, arm), X(valid, arm))
+        print(f"  arms     {arm:<9} all       : {c}")
+        plan.append(("arms", c, 2))
+    for n in ("200000", "100000", "50000"):
+        for sampling in ("recent", "random"):
+            ctx = select_context(train, n, sampling)
+            c = quote(tabpfn_client, X(ctx), Xv_raw)
+            print(f"  context  {sampling:<9} {n:>7}   : {c}")
+            plan.append(("context", c, 2))
+    c = quote(tabpfn_client, X(train), Xv_raw, model_version="v3.5-fast")
+    print(f"  modes    fast      all       : {c}")
+    plan.append(("modes", c, 2))
+    ctx200 = select_context(train, "200000", "recent")
+    cf = quote(tabpfn_client, X(ctx200), operation="thinking_fit")
+    cp = quote(tabpfn_client, X(ctx200), Xv_raw, operation="thinking_predict")
+    print(f"  modes    thinking  200000 fit: {cf}")
+    print(f"  modes    thinking  200000 prd: {cp}")
+    plan.append(("modes", cf, 1))
+    plan.append(("modes", cp, 1))
+    c = quote(tabpfn_client, X(train), X(test))
+    print(f"  kaggle   raw       all (test): {c}")
+    plan.append(("kaggle", c, 2))
+
+    print("\n[estimate] expected spend per block (quote x calls):")
+    totals = {}
+    for block, c, k in plan:
+        if c is None:
+            totals[block] = None
+        elif totals.get(block, 0) is not None:
+            totals[block] = totals.get(block, 0) + c * k
+    for block in ("arms", "context", "modes", "kaggle"):
+        t = totals.get(block)
+        print(f"  {block:<8}: {'unknown' if t is None else f'{t:,}'}")
+    known = [t for t in totals.values() if t is not None]
+    print(f"  total   : {sum(known):,}{'' if len(known) == len(totals) else ' (+ unknown)'}"
+          f"  — daily quota 5,000,000")
+    print("[estimate] done — nothing was spent.")
 
 
 if __name__ == "__main__":

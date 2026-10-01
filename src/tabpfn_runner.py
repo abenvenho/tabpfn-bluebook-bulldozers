@@ -25,9 +25,32 @@ from .schema import DATE_COL, DATE_PARSED, ID_COL, RAW_PREDICTORS, TARGET
 QUANTILES = [0.1, 0.25, 0.5, 0.75, 0.9]
 QCOLS = [f"q{int(q * 100)}" for q in QUANTILES]
 
-# Server-side model identifiers per mode. `base` uses the API default (TabPFN-3.5).
-# scripts/00_check_api.py lists what the account actually exposes; override with --model-id.
-MODE_MODEL_ID = {"base": None, "fast": "tabpfn-3.5-fast", "thinking": "tabpfn-3.5-thinking"}
+# How each mode is built (tabpfn-client 0.6.1, checked against the client source on
+# 2026-10-01). `base` is untouched from the primary run: TabPFNRegressor() with the
+# server default model ("auto" -> v3.5). `fast` pins the v3.5-fast model. `thinking`
+# is an option of the regressor, not a separate model: extra fit-time search that here
+# optimises RMSE of log1p(price), i.e. the competition's RMSLE. The API caps thinking
+# at 200k training rows and returns point predictions only (no quantiles).
+def make_regressor(mode: str, model_id=None):
+    from tabpfn_client import TabPFNRegressor
+
+    if model_id:  # explicit override from the command line
+        return TabPFNRegressor(model_path=model_id), {"model_path": model_id}
+    if mode == "base":
+        return TabPFNRegressor(), {}
+    if mode == "fast":
+        return (TabPFNRegressor.create_default_for_version("v3.5-fast"),
+                {"model_path": "v3.5-fast_default"})
+    if mode == "thinking":
+        return (TabPFNRegressor(thinking_mode=True, thinking_metric="rmse"),
+                {"thinking_mode": True, "thinking_effort": "medium (default)",
+                 "thinking_metric": "rmse"})
+    raise ValueError(mode)
+
+
+def _is_quota_error(e: Exception) -> bool:
+    s = str(e)
+    return "429" in s or "usage limit" in s.lower()
 
 
 def select_context(train: pd.DataFrame, context: str, sampling: str, seed=42):
@@ -79,33 +102,34 @@ def predict_mock(Xc, yc, Xe, seed=42):
 def predict_api(Xc, yc, Xe, mode: str, model_id):
     """TabPFN via the Prior Labs API (tabpfn_client). Zero-shot, default settings."""
     import tabpfn_client
-    from tabpfn_client import TabPFNRegressor
 
     token = os.environ.get("TABPFN_TOKEN")
     if token:
         tabpfn_client.set_access_token(token)
 
-    kwargs = {}
-    if model_id:
-        try:
-            reg = TabPFNRegressor(model_path=model_id)
-            kwargs["model_path"] = model_id
-        except TypeError:
-            reg = TabPFNRegressor(model=model_id)
-            kwargs["model"] = model_id
-    else:
-        reg = TabPFNRegressor()
+    reg, kwargs = make_regressor(mode, model_id)
     reg.fit(Xc, yc)
 
-    try:
-        qpred = reg.predict(Xe, output_type="quantiles", quantiles=QUANTILES)
-        qs = {q: np.asarray(qpred[i]) for i, q in enumerate(QUANTILES)} \
-            if isinstance(qpred, (list, tuple)) else {q: np.asarray(qpred[q]) for q in QUANTILES}
-        mean = np.asarray(reg.predict(Xe))
-    except Exception as e:  # quantile output unavailable on this mode/endpoint
-        print(f"[tabpfn] quantile output unavailable ({e}); point predictions only")
+    if mode == "thinking":  # the API returns point predictions only in thinking mode
         mean, qs = np.asarray(reg.predict(Xe)), {}
-    return mean, qs, {"predictor": "tabpfn_client", "mode": mode, **kwargs}
+    else:  # unchanged from the primary run: quantile call, then mean call
+        try:
+            qpred = reg.predict(Xe, output_type="quantiles", quantiles=QUANTILES)
+            qs = {q: np.asarray(qpred[i]) for i, q in enumerate(QUANTILES)} \
+                if isinstance(qpred, (list, tuple)) else {q: np.asarray(qpred[q]) for q in QUANTILES}
+            mean = np.asarray(reg.predict(Xe))
+        except Exception as e:  # quantile output unavailable on this mode/endpoint
+            if _is_quota_error(e):  # do not spend a second call on an exhausted quota
+                raise
+            print(f"[tabpfn] quantile output unavailable ({e}); point predictions only")
+            mean, qs = np.asarray(reg.predict(Xe)), {}
+
+    info = {"predictor": "tabpfn_client", "mode": mode, **kwargs}
+    try:  # server-side seconds per stage (fit / predict), for the README
+        info["server_timings"] = reg.get_timings()
+    except Exception:
+        pass
+    return mean, qs, info
 
 
 def main(argv=None):
@@ -139,8 +163,7 @@ def main(argv=None):
     if args.mock:
         mean_log, qs_log, info = predict_mock(Xc, yc, Xe)
     else:
-        mean_log, qs_log, info = predict_api(Xc, yc, Xe, args.mode,
-                                             args.model_id or MODE_MODEL_ID[args.mode])
+        mean_log, qs_log, info = predict_api(Xc, yc, Xe, args.mode, args.model_id)
     wall = round(time.time() - t0, 1)
 
     pred = np.expm1(mean_log)
@@ -173,7 +196,7 @@ def main(argv=None):
 
     out.to_csv(f"results/preds/{tag}.csv", index=False)
     with open(f"results/metrics/{tag}.json", "w") as f:
-        json.dump(m, f, indent=2)
+        json.dump(m, f, indent=2, default=str)
 
 
 if __name__ == "__main__":
