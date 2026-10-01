@@ -9,7 +9,7 @@ Nothing in this file changes a pre-registered verdict (see `verdicts.md`). Paire
 | fast (all sales) vs base (all sales) | 0.22050 | 0.22001 | +0.00049 | -0.00065 .. +0.00163 |
 | thinking (50k recent) vs base (50k recent) | 0.22782 | 0.22630 | +0.00152 | +0.00033 .. +0.00274 |
 
-Thinking mode failed server-side twice at the pre-planned 200k context ("The worker failed to process this request"; request_ids `a724cd8f2ce84f9cabad7e6de3d06c74`, `ca766e3690b6410588dcc297d6439758`) and ran at 50k. It optimises RMSE of log1p(price) with its own internal validation; no `time_col` was passed, because the raw arm keeps the date as the CSV string and the API requires datetimes or numbers there.
+Thinking mode failed server-side twice at the pre-planned 200k context ("The worker failed to process this request"; request_ids `a724cd8f2ce84f9cabad7e6de3d06c74`, `ca766e3690b6410588dcc297d6439758`) and ran at 50k. It optimises RMSE of log1p(price) with its own internal validation; no `time_col` was passed, because the raw arm keeps the date as the CSV string and the API requires datetimes or numbers there. Whether that explains the result was not tested.
 
 ## Every TabPFN configuration against the engineered LightGBM
 

@@ -84,7 +84,8 @@ def main():
             "`a724cd8f2ce84f9cabad7e6de3d06c74`, `ca766e3690b6410588dcc297d6439758`) "
             "and ran at 50k. It optimises RMSE of log1p(price) with its own internal "
             "validation; no `time_col` was passed, because the raw arm keeps the date "
-            "as the CSV string and the API requires datetimes or numbers there.", ""]
+            "as the CSV string and the API requires datetimes or numbers there. Whether "
+            "that explains the result was not tested.", ""]
 
     # ---------- beats LightGBM ----------
     lgbm = rows.get("lgbm_engineered", {}).get("rmsle")
