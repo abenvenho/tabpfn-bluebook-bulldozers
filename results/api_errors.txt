@@ -1,0 +1,11 @@
+# API errors returned to the author's terminal, transcribed verbatim (final line of each
+# traceback). Kept as evidence for the cost and thinking-mode statements in the README.
+
+## 2026-09-30 — daily quota exhausted (after the pilot and primary runs; first and second
+## attempt of the arms block). Source of the "5,000,000 tokens per day" figure.
+RuntimeError: Fail to call predict: [HTTP 429] Daily usage limit reached. Your daily limit is 5000000 tokens. Resets at 2026-10-01 00:00:00 UTC. To learn more or request an increase: https://platform.priorlabs.ai/account/usage. Report trace ID: 6d56d5a7c1c945d88c18ce3b9465b7e2.
+RuntimeError: Fail to call predict: [HTTP 429] Daily usage limit reached. Your daily limit is 5000000 tokens. Resets at 2026-10-01 00:00:00 UTC. To learn more or request an increase: https://platform.priorlabs.ai/account/usage. Report trace ID: b5e15253fb114de7995b61e9824bf7cb.
+
+## 2026-10-01 — thinking mode, raw arm, 200k most recent sales: fit failed server-side, twice.
+RuntimeError: Fit 01a0f6e7-34f2-7580-869e-08a3b15859d7 failed: The worker failed to process this request. Reference request_id: a724cd8f2ce84f9cabad7e6de3d06c74
+RuntimeError: Fit 01a0f753-1ed6-7431-8828-f6ec1031bd77 failed: The worker failed to process this request. Reference request_id: ca766e3690b6410588dcc297d6439758
