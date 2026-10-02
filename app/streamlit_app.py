@@ -241,34 +241,40 @@ def dirt_flags(row: pd.Series) -> list:
 
 def apply_edits(orig: pd.Series, edited: dict) -> tuple:
     """Copy of the sale with only the changed fields replaced. Unchanged fields keep
-    their stored values and types, so an unedited sale reaches the API exactly as in
-    the batch run."""
+    their stored values and types, so an unedited sale is handed to the API client
+    with the same values as in the batch run. Returns (row, changed, not_numbers)."""
     row = orig.copy()
-    changed = []
+    changed, not_numbers = [], []
     for col, new in edited.items():
         new = "" if new is None else str(new).strip()
-        if new == show(orig[col]):
+        if new == show(orig[col]).strip():
             continue
         changed.append(col)
         if new == "":
             row[col] = np.nan
         elif col in NUMERIC_COLS:
-            row[col] = pd.to_numeric(new, errors="coerce")
+            val = pd.to_numeric(new, errors="coerce")
+            if pd.isna(val):
+                not_numbers.append(col)
+            row[col] = val
         else:
             row[col] = new
     if DATE_COL in changed:
         row[DATE_PARSED] = pd.to_datetime(row[DATE_COL], errors="coerce")
-    return row, changed
+    return row, changed, not_numbers
 
 
-def as_frame(row: pd.Series) -> pd.DataFrame:
-    """One-row frame with the column types the pipeline expects."""
+def as_frame(row: pd.Series, dtypes: pd.Series) -> pd.DataFrame:
+    """One-row frame with the column types the pipeline expects (float columns stay
+    float, so an edited hour reading is sent like the context's)."""
     df = pd.DataFrame([row])
     for c in df.columns:
         if c == DATE_PARSED:
             df[c] = pd.to_datetime(df[c], errors="coerce")
         elif c in NUMERIC_COLS or c in (TARGET, ID_COL):
             df[c] = pd.to_numeric(df[c], errors="coerce")
+            if c in dtypes.index and pd.api.types.is_float_dtype(dtypes[c]):
+                df[c] = df[c].astype(float)
         else:
             df[c] = df[c].astype(object)
     return df
@@ -386,8 +392,9 @@ with st.sidebar:
     sid = st.selectbox("Sale", pool[ID_COL].tolist(), format_func=label)
     sale = sales.loc[sales[ID_COL] == sid].iloc[0]
     st.divider()
-    st.caption("Tabs 2 and 3 follow this choice. The default filter lists the dirtiest "
-               "rows first: no year of manufacture and no hour reading.")
+    st.caption("Tabs 2 and 3 follow this choice."
+               + (" By default the list holds only the dirtiest rows: no year of "
+                  "manufacture and no hour reading." if valid is not None else ""))
 
 tab1, tab2, tab3 = st.tabs(["The test", "Jan–Apr 2012 sales", "Price a machine as is"])
 
@@ -403,7 +410,7 @@ with tab1:
 
     st.subheader("Five hypotheses, frozen in git before the first run")
     v = parse_verdicts()
-    lines = ["| | Pre-registered statement | Measured (paired bootstrap, 95% CI) | Verdict |",
+    lines = ["| | Pre-registered statement | Measured | Verdict |",
              "|---|---|---|---|"]
     for _, r in v.iterrows():
         measured = r["Measured"].split("; refuted iff")[0].replace(" .. ", " to ")
@@ -453,8 +460,10 @@ with tab2:
                "Orange mark: realized auction price.")
 
     if valid is not None:
-        st.markdown("**What TabPFN-3.5 received for this sale**, exactly as in the CSV: "
-                    + " · ".join(dirt_flags(sale)))
+        st.markdown("**What TabPFN-3.5 received for this sale**, as parsed from the CSV, "
+                    "with no cleaning: " + " · ".join(dirt_flags(sale)))
+        st.caption("Before upload, the API client itself removes commas and repeated spaces "
+                   "from text values, for every run alike.")
         raw = pd.DataFrame({"Column": RAW_PREDICTORS,
                             "Value as received": [show(sale[c]) or "(empty)" for c in RAW_PREDICTORS]})
         with st.expander("All 51 predictor columns", expanded=False):
@@ -545,14 +554,17 @@ with tab3:
             editor_df, hide_index=True, width="stretch", height=430, key=f"edit_{sid}",
             disabled=["Column"],
             column_config={"Value": st.column_config.TextColumn("Value (edit me)")})
-    row_s, changed = apply_edits(orig, dict(zip(edited["Column"], edited["Value"])))
+    row_s, changed, not_numbers = apply_edits(orig, dict(zip(edited["Column"], edited["Value"])))
     # Unedited: the very row of the batch run. Edited: the same row with the changes.
-    row = valid.loc[valid[ID_COL] == sid] if not changed else as_frame(row_s)
+    row = valid.loc[valid[ID_COL] == sid] if not changed else as_frame(row_s, valid.dtypes)
     with right:
         st.markdown("**This machine, as TabPFN-3.5 will receive it:** "
                     + " · ".join(dirt_flags(row_s)))
         if changed:
             st.markdown("Edited: " + ", ".join(f"`{c}`" for c in changed))
+            if not_numbers:
+                st.warning("Not a number, so it goes as a missing value: "
+                           + ", ".join(f"`{c}`" for c in not_numbers))
         else:
             st.markdown("Unedited: the same row as in the batch run, so the live answer can "
                         "be compared with the versioned 50k prediction.")
@@ -585,12 +597,14 @@ with tab3:
                     f"{a} {v:,} tokens" for a, v in qd.items())
                     + f". This pricing makes {2 * len(qd)} calls: about **{total:,} tokens**.")
 
-        if st.button("2 · Price it with TabPFN-3.5", type="primary",
+        if st.button("2 · Price it (MOCK stand-in)" if MOCK else "2 · Price it with TabPFN-3.5",
+                     type="primary",
                      disabled=not (ready and quoted), width="stretch"):
             before = None if MOCK else usage_now(token)
             res = {}
             try:
-                with st.spinner("Calling TabPFN-3.5 (50,000 sales of context)…"):
+                with st.spinner("Running the MOCK stand-in…" if MOCK else
+                                "Calling TabPFN-3.5 (50,000 sales of context)…"):
                     for a in arms:
                         res[a] = live_predict(a, ctx, row, token)
             except Exception as e:
@@ -600,6 +614,7 @@ with tab3:
                 spent = (after - before) if (before is not None and after is not None) else None
                 st.session_state["live"] = (key, res, spent)
                 st.session_state.setdefault("history", []).append({
+                    "model": "MOCK stand-in" if MOCK else "TabPFN-3.5, 50k context",
                     "SalesID": sid, "edited": ", ".join(changed) or "—",
                     "raw (US$)": round(res["raw"]["mean"]),
                     "cleaned (US$)": round(res["clean"]["mean"]) if "clean" in res else None,
@@ -610,7 +625,7 @@ with tab3:
             st.caption("Quote first: the call button unlocks after the quote.")
 
     live = st.session_state.get("live")
-    if live is not None and live[0][0] == sid:
+    if live is not None and live[0] == key:
         key_l, res, spent = live
         st.divider()
         tag = " (MOCK — not TabPFN)" if MOCK else ""

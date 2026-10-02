@@ -39,7 +39,7 @@ The contributions are: (i) a pre-registered, out-of-time comparison of a zero-sh
 
 \section{Related work}
 
-The 2013 competition asked for the auction price of heavy equipment from usage, type and configuration. Published write-ups by top-ranked teams converge on the same recipe: separate models per product group or subgroup, blends of gradient boosting machines, random forests \cite{breiman2001} and linear models, hyper-parameter search, and the removal of old or atypical periods \cite{seroussi2014,olariu2013,dataiku2013}. The same teams report that the ``corrected'' Machine Appendix released by the organisers did not help or made results worse; one of them used it only to fill missing values. Parr and Howard \cite{parr} use the competition's validation set as a test set for a tuned random forest, which provides the only published reference we found on the basis used here.
+The 2013 competition asked for the auction price of heavy equipment from usage, type and configuration. Published write-ups by top-ranked teams share a recipe: separate models per product group or subgroup, hyper-parameter search, the removal of old or atypical periods and, in two of the three, blends of gradient boosting machines, random forests \cite{breiman2001} and linear models \cite{seroussi2014,olariu2013,dataiku2013}. The same teams report that the ``corrected'' Machine Appendix released by the organisers did not help or made results worse; one of them used it only to fill missing values. Parr and Howard \cite{parr} use the competition's validation set as a test set for a tuned random forest, which provides the only published reference we found on the basis used here.
 
 TabPFN was introduced as a transformer that solves small classification problems in a forward pass \cite{hollmann2023} and extended to regression \cite{hollmann2025}; later versions, including TabPFN-3.5, are served through the Prior Labs API \cite{priorlabs}. Its claims are usually tested on curated benchmarks; this study asks what happens on a table that was never curated, against a baseline that was.
 
@@ -99,7 +99,7 @@ which measures relative error. Predictions and quantiles are back-transformed wi
 
 TabPFN-3.5 is called through the Prior Labs API (\texttt{tabpfn-client} 0.6.1) with default settings, zero-shot: no fitting to these data, no hyper-parameter search. Each run returns the mean prediction and the quantiles 0.10, 0.25, 0.50, 0.75 and 0.90; the 80\% interval is [q10, q90]. Three versions of the table (\emph{arms}) are compared:
 \begin{itemize}
-\item \textbf{raw} (primary): the 51 predictors exactly as in the CSV, including the sale date as text; nothing imputed or corrected;
+\item \textbf{raw} (primary): the 51 predictors as parsed from the CSV, including the sale date as text; nothing imputed or corrected (before upload, \texttt{tabpfn-client} itself removes commas and repeated spaces from text values, in every arm);
 \item \textbf{clean}: 2013-style cleaning; years before 1900 and zero hour readings set to missing; the date replaced by year, month, day of week and days since 1989; age at sale added;
 \item \textbf{appendix}: the raw table plus six Machine Appendix attributes joined on the machine identifier.
 \end{itemize}
@@ -228,7 +228,7 @@ For valuation practice the main result is that the cleaning step stopped being a
 
 The refuted hypothesis is as informative as the corroborated ones. A practitioner's instinct, to prefer recent sales, held only when the context was small; with large contexts, breadth won. The small upward bias of the realized prices, with an interval that still held, is a reminder that a model conditioned on past sales can lag the season or market it predicts; here its cause was not established.
 
-Limits are clear. There is one evaluation period, January to April 2012. The baseline is plain: fixed hyper-parameters, no Machine Appendix, no per-group models and no blending, all of which the 2013 top teams used, so a stronger adversary is possible. There is one table and one market. The hidden test set could not be scored. Deviations from the pre-registration are listed in Appendix~\ref{app:dev}.
+Limits are clear. There is one evaluation period, January to April 2012. The baseline is plain: fixed hyper-parameters, no Machine Appendix, no per-group models and no blending, which the 2013 top teams used in whole or in part, so a stronger adversary is possible. There is one table and one market. The hidden test set could not be scored. Deviations from the pre-registration are listed in Appendix~\ref{app:dev}.
 
 \section{Conclusion}
 

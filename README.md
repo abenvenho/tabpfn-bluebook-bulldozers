@@ -12,7 +12,10 @@ for 9.5% of the sales, the hour meter missing for 64% and zero for another 18%, 
 predictor columns more than half empty, 5,218 model codes, free-text descriptions, the sale
 date as the CSV string `"3/14/2012 0:00"` — and used **zero-shot**, prices the machines sold
 in the following months as well as a LightGBM given 2013-style data cleaning and feature
-engineering. (Measured in `results/metrics/noise_audit.json`.)
+engineering. (Measured in `results/metrics/noise_audit.json`.) "As it came" means no
+cleaning on our side: the values go to `tabpfn-client` as pandas parses them from the CSV;
+before upload, the client itself removes commas and repeated spaces from text values, the
+same for every arm.
 
 "As is, where is" is the auction clause under which this equipment actually trades: no
 warranty, no cleanup. The question is whether a tabular foundation model can price under
@@ -55,9 +58,9 @@ Machine Appendix did **not** help — the 9th
 16th ([Olariu](http://webmining.olariu.org/trees-ridges-and-bulldozers-made-in-1000-ad/)) and
 20th ([Dataiku](https://blog.dataiku.com/2013/04/26/kaggle-contest-blue-book-for-bulldozers))
 placed teams among them; here that report becomes a falsifiable hypothesis (H2). Those teams
-also fitted separate models per product group, blended several models (gradient boosting,
-random forests, linear models) and searched their hyper-parameters — none of which the
-LightGBM baseline here does (see *Limits*).
+also fitted separate models per product group and searched their hyper-parameters, and two of
+them (9th and 16th) blended several models (gradient boosting, random forests, linear
+models) — none of which the LightGBM baseline here does (see *Limits*).
 
 ## Results
 
@@ -222,8 +225,8 @@ Logged as the pre-registration requires; where a choice was open, it went to the
 
 - **One evaluation period**, January to April 2012. Other periods may differ.
 - **A plain adversary.** The LightGBM has fixed hyper-parameters, no Machine Appendix, no
-  per-group models and no blending; the 2013 top teams did all of these, so a stronger
-  adversary is possible.
+  per-group models and no blending; the 2013 top teams used per-group models and tuning,
+  and some of them blends, so a stronger adversary is possible.
 - **One table, one market.** The finding is not tested on other data.
 - **The independent audit was done by an AI agent**, not a person, recomputing every number
   in this README from the result files with its own code.
@@ -234,7 +237,7 @@ Logged as the pre-registration requires; where a choice was open, it went to the
 .venv/bin/streamlit run app/streamlit_app.py      # from the repository root
 ```
 
-Three tabs, all read from this repository's files:
+Three tabs; the first two read only this repository's files, the third calls the API:
 
 - **The test** — the bet, the five pre-registered verdicts and the figures, from `results/`.
 - **Jan–Apr 2012 sales** — every validation sale: realized price, TabPFN-3.5 with its 80%
