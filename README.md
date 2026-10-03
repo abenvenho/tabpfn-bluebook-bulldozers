@@ -23,7 +23,8 @@ the same clause — taking the data as is, where it is.
 
 **Paper:** [paper/bluebook_tabpfn_paper.pdf](paper/bluebook_tabpfn_paper.pdf) (9 pages; LaTeX
 source alongside). **Slides:** [docs/bluebook_tabpfn_slides.pdf](docs/bluebook_tabpfn_slides.pdf)
-(12 slides). **App:** `streamlit run app/streamlit_app.py` — see [App](#app).
+(12 slides). **App:** `streamlit run app/streamlit_app.py` — see [App](#app). **Video:**
+[4-minute demo of the app, with a live API call](https://youtu.be/k5k3EKlGvEk).
 
 The design is set **against** the bet, and every hypothesis, threshold and analysis
 decision is frozen in [PREREGISTRATION.md](PREREGISTRATION.md) *before* the first TabPFN
@@ -236,6 +237,9 @@ Logged as the pre-registration requires; where a choice was open, it went to the
 ```bash
 .venv/bin/streamlit run app/streamlit_app.py      # from the repository root
 ```
+
+A 4-minute recording of the app, including a live call to the Prior Labs API, is at
+[youtu.be/k5k3EKlGvEk](https://youtu.be/k5k3EKlGvEk) (the wait for the call is cut).
 
 Three tabs; the first two read only this repository's files, the third calls the API:
 
