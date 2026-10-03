@@ -309,6 +309,14 @@ results/                predictions, metrics, scoreboard.md, verdicts.md,
                         submission_kaggle_primary.csv
 ```
 
+## Use of AI tools
+
+The code was written with the help of the cloud models Claude Fable 5.1 and Claude Opus 5.5
+(Anthropic) and OpenAI GPT Astra 6, and of the local models Qwen 3 Coder Next and Qwen 3.8
+Next Flash. The cloud models were also used for writing, revision, figure generation and
+research. The design of the experiment, the analyses and the conclusions are the author's
+responsibility.
+
 ## License and credits
 
 Code under [Apache-2.0](LICENSE). TabPFN and TabPFN-3.5 are developed by
